@@ -4,17 +4,61 @@ import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { fadeUp } from "@/lib/animations";
 
+const WEBHOOK_URLS: Record<string, string> = {
+  general: "https://humblemindailabs.app.n8n.cloud/webhook/f1f4af51-1bf1-4622-90b5-46fd140f24ec",
+  managed_it: "https://humblemindailabs.app.n8n.cloud/webhook/f1f4af51-1bf1-4622-90b5-46fd140f24ec",
+  cybersecurity: "https://humblemindailabs.app.n8n.cloud/webhook/f1f4af51-1bf1-4622-90b5-46fd140f24ec",
+  backup_dr: "https://humblemindailabs.app.n8n.cloud/webhook/f1f4af51-1bf1-4622-90b5-46fd140f24ec",
+  networking: "https://humblemindailabs.app.n8n.cloud/webhook/f1f4af51-1bf1-4622-90b5-46fd140f24ec",
+  cctv_biometrics: "https://humblemindailabs.app.n8n.cloud/webhook/f1f4af51-1bf1-4622-90b5-46fd140f24ec",
+  server_rooms: "https://humblemindailabs.app.n8n.cloud/webhook/f1f4af51-1bf1-4622-90b5-46fd140f24ec",
+};
+
+const SERVICE_OPTIONS = [
+  { value: "general", label: "General Enquiry" },
+  { value: "managed_it", label: "Managed IT Support" },
+  { value: "cybersecurity", label: "Cybersecurity" },
+  { value: "backup_dr", label: "Backup & DR" },
+  { value: "networking", label: "Networking" },
+  { value: "cctv_biometrics", label: "CCTV & Biometrics" },
+  { value: "server_rooms", label: "Server Rooms & Hardware" },
+];
+
 const Contact = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({ name: "", email: "", company: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", company: "", service: "general", message: "" });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message Sent",
-      description: "Thank you for reaching out. We'll get back to you within 24 hours.",
-    });
-    setFormData({ name: "", email: "", company: "", message: "" });
+    setSubmitting(true);
+
+    try {
+      const webhookUrl = WEBHOOK_URLS[formData.service];
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      toast({
+        title: "Message Sent",
+        description: "Thank you for reaching out. We'll get back to you within 24 hours.",
+      });
+      setFormData({ name: "", email: "", company: "", service: "general", message: "" });
+    } catch {
+      toast({
+        title: "Something went wrong",
+        description: "Unable to send your message. Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -82,6 +126,21 @@ const Contact = () => {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Service *</label>
+                  <select
+                    required
+                    value={formData.service}
+                    onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                    className="w-full bg-background border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-colors"
+                  >
+                    {SERVICE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Message *</label>
                   <textarea
                     required
@@ -94,9 +153,10 @@ const Contact = () => {
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3.5 text-sm font-semibold tracking-wide hover:opacity-90 transition-opacity"
+                  disabled={submitting}
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3.5 text-sm font-semibold tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Send Message <Send size={16} />
+                  {submitting ? "Sending..." : "Send Message"} <Send size={16} />
                 </button>
               </form>
             </motion.div>
