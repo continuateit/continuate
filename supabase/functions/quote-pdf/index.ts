@@ -64,6 +64,7 @@ const createPdf = async (quote: any, items: any[]) => {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
+    console.log("[quote-pdf] OPTIONS preflight");
     return new Response("ok", {
       headers: {
         "Access-Control-Allow-Origin": "*",
@@ -73,15 +74,19 @@ serve(async (req) => {
   }
 
   try {
+    console.log("[quote-pdf] request start");
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.log("[quote-pdf] missing Authorization header");
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
     const token = authHeader.replace("Bearer ", "");
     const { data: authUser, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authUser?.user) {
+      console.log("[quote-pdf] auth error", authError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
+    console.log("[quote-pdf] auth ok", authUser.user.id);
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -89,32 +94,44 @@ serve(async (req) => {
       .eq("auth_user_id", authUser.user.id)
       .maybeSingle();
     if (profile?.role !== "admin") {
+      console.log("[quote-pdf] forbidden role", profile?.role ?? "none");
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
     }
+    console.log("[quote-pdf] role ok");
 
     const { quoteId } = await req.json();
     if (!quoteId) {
+      console.log("[quote-pdf] missing quoteId");
       return new Response(JSON.stringify({ error: "quoteId is required" }), { status: 400 });
     }
+    console.log("[quote-pdf] quoteId", quoteId);
 
     const { data: quote, error: quoteError } = await supabase
       .from("quotes")
       .select("*")
       .eq("public_id", quoteId)
       .single();
-    if (quoteError || !quote) throw quoteError ?? new Error("Quote not found");
+    if (quoteError || !quote) {
+      console.log("[quote-pdf] quote fetch error", quoteError?.message);
+      throw quoteError ?? new Error("Quote not found");
+    }
 
     const { data: items, error: itemsError } = await supabase
       .from("quote_items")
       .select("*")
       .eq("quote_id", quote.id);
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      console.log("[quote-pdf] items error", itemsError?.message);
+      throw itemsError;
+    }
 
     const pdfBase64 = await createPdf(quote, items ?? []);
+    console.log("[quote-pdf] pdf generated", pdfBase64.length);
     return new Response(JSON.stringify({ base64: pdfBase64, filename: `Continuate-Quote-${quote.public_id}.pdf` }), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
     });
   } catch (error) {
+    console.log("[quote-pdf] error", error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Failed" }), {
       status: 500,
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
