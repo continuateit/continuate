@@ -280,8 +280,8 @@ const AdminTests = () => {
 
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <div className="text-sm font-medium">send-quote</div>
-              <div className="text-xs text-muted-foreground">Sends the quote email through Mailjet.</div>
+              <div className="text-sm font-medium">Send Quote Email</div>
+              <div className="text-xs text-muted-foreground">Sends the quote email via Vercel API.</div>
             </div>
             <div className="flex items-center gap-3">
               {statusBadge(results.sendQuote?.status ?? "idle")}
@@ -291,12 +291,20 @@ const AdminTests = () => {
                   run("sendQuote", async () => {
                     if (!quoteId.trim()) throw new Error("Enter a quote public ID first.");
                     const token = await getAccessToken();
-                    const { data, error } = await supabase.functions.invoke("send-quote", {
-                      body: { quoteId: quoteId.trim(), dryRun },
-                      headers: { Authorization: `Bearer ${token}` },
+                    const response = await fetch("/api/send-quote", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ quoteId: quoteId.trim(), dryRun }),
                     });
-                    if (error) throw error;
-                    if (!data?.ok) throw new Error("Function did not return ok.");
+                    if (!response.ok) {
+                      const text = await response.text();
+                      throw new Error(text || "Send request failed.");
+                    }
+                    const data = await response.json();
+                    if (!data?.ok) throw new Error("Send request failed.");
                     return dryRun ? "Dry run complete." : "Send request completed.";
                   })
                 }

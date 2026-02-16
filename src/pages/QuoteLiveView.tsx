@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { fadeUp } from "@/lib/animations";
 import { fetchQuote, type Quote } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,9 +52,14 @@ const QuoteLiveView = () => {
   };
 
   useEffect(() => {
-    if (!quote?.id) return;
-    fetch(`/api/quotes/${quote.id}/viewed`, { method: "POST" }).catch(() => {});
-  }, [quote?.id]);
+    if (!quote?.dbId) return;
+    supabase
+      .from("quotes")
+      .update({ viewed_at: new Date().toISOString() })
+      .eq("id", quote.dbId)
+      .then(() => {})
+      .catch(() => {});
+  }, [quote?.dbId]);
 
   if (loading) {
     return <div className="text-sm text-muted-foreground">Loading proposal…</div>;

@@ -439,12 +439,19 @@ export const sendQuote = async (id: string) => {
   if (!token) {
     throw new Error("You must be signed in to send quotes.");
   }
-  const { data, error } = await supabase.functions.invoke("send-quote", {
-    body: { quoteId: id },
-    headers: { Authorization: `Bearer ${token}` },
+  const response = await fetch("/api/send-quote", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ quoteId: id }),
   });
-  if (error) handleError(error);
-  return data ?? { ok: true };
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Failed to send quote.");
+  }
+  return response.json();
 };
 
 export const acceptQuote = async (id: string, payload: Record<string, unknown>) => {
