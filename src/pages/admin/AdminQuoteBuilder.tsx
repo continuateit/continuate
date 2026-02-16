@@ -91,7 +91,10 @@ const AdminQuoteBuilder = () => {
 
       toast({
         title: status === "Sent" ? "Quote sent" : "Quote saved",
-        description: `Quote ${data.id} stored in Postgres.`,
+        description:
+          status === "Sent"
+            ? `Quote ${data.id} emailed via Mailjet.`
+            : `Quote ${data.id} stored in Postgres.`,
       });
     } catch (error) {
       toast({
