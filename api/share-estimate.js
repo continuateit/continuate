@@ -30,6 +30,18 @@ const getBaseUrl = (req) => {
   return `https://${host}`;
 };
 
+const loadLogo = async (baseUrl, path) => {
+  if (!baseUrl) return null;
+  try {
+    const response = await fetch(`${baseUrl}${path}`);
+    if (!response.ok) return null;
+    const buffer = await response.arrayBuffer();
+    return Buffer.from(buffer);
+  } catch {
+    return null;
+  }
+};
+
 const calculateEstimate = ({ devices, cybersecurity, backup }) => {
   const baseRate = 220;
   const cybersecurityRate = 125;
@@ -153,7 +165,9 @@ export default async function handler(req, res) {
     }
 
     const acceptUrl = appBaseUrl ? `${appBaseUrl}/quote/${quote.public_id}/accept` : "";
-    const pdf = await buildPdf({ quote, items, acceptUrl, slaUrl });
+    const logoDark = await loadLogo(appBaseUrl, "/logo-dark.png");
+    const logoLight = await loadLogo(appBaseUrl, "/logo-light.png");
+    const pdf = await buildPdf({ quote, items, acceptUrl, slaUrl, logoDark, logoLight });
 
     const client = mailjet.apiConnect(mailjetKey, mailjetSecret);
     await client.post("send", { version: "v3.1" }).request({

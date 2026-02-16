@@ -20,7 +20,7 @@ export const normalizeList = (value) => {
   return [];
 };
 
-export const buildPdf = ({ quote, items, acceptUrl, slaUrl }) =>
+export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight }) =>
   new Promise((resolve) => {
     const doc = new PDFDocument({ size: "A4", margin: 40 });
     const chunks = [];
@@ -44,6 +44,59 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl }) =>
       doc.moveDown(0.3);
     };
 
+    const drawHeaderFooter = (pageIndex) => {
+      if (pageIndex === 0) return;
+      const topY = 28;
+      if (logoLight) {
+        try {
+          doc.image(logoLight, doc.page.margins.left, topY, { width: 90 });
+        } catch {
+          // ignore logo render errors
+        }
+      }
+      doc
+        .font("Helvetica")
+        .fontSize(8)
+        .fillColor("#666")
+        .text("Continuate IT Services", doc.page.margins.left + 100, topY + 6);
+      doc
+        .strokeColor("#e5e5e5")
+        .lineWidth(1)
+        .moveTo(doc.page.margins.left, 60)
+        .lineTo(doc.page.width - doc.page.margins.right, 60)
+        .stroke();
+
+      const footerY = doc.page.height - 40;
+      doc
+        .strokeColor("#e5e5e5")
+        .lineWidth(1)
+        .moveTo(doc.page.margins.left, footerY - 10)
+        .lineTo(doc.page.width - doc.page.margins.right, footerY - 10)
+        .stroke();
+      if (logoLight) {
+        try {
+          doc.image(logoLight, doc.page.margins.left, footerY - 6, { width: 60 });
+        } catch {
+          // ignore
+        }
+      }
+      doc
+        .font("Helvetica")
+        .fontSize(8)
+        .fillColor("#666")
+        .text(`Page ${pageIndex + 1}`, doc.page.width - doc.page.margins.right - 60, footerY - 6, {
+          width: 60,
+          align: "right",
+        });
+      doc.y = 80;
+    };
+
+    let pageIndex = 0;
+    doc.on("pageAdded", () => {
+      pageIndex += 1;
+      drawHeaderFooter(pageIndex);
+    });
+
     // Cover
     doc.rect(0, 0, doc.page.width, 220).fill("#111");
     doc.fillColor("#fff");
@@ -54,6 +107,13 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl }) =>
     doc.text(`Prepared for: ${quote.customer ?? "—"}`, 40, 170);
     doc.text(`Proposal Ref: ${quote.public_id}`, 40, 188);
 
+    if (logoDark) {
+      try {
+        doc.image(logoDark, 40, 235, { width: 120 });
+      } catch {
+        // ignore
+      }
+    }
     doc.fillColor("#111");
     doc.font("Helvetica-Bold").fontSize(14).text("CONTINUATE IT SERVICES", 40, 260);
     doc.font("Helvetica").fontSize(10).text("377 Rivonia Boulevard, Sandton, 2196");

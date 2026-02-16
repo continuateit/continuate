@@ -25,6 +25,18 @@ const getBaseUrl = (req) => {
   return `https://${host}`;
 };
 
+const loadLogo = async (baseUrl, path) => {
+  if (!baseUrl) return null;
+  try {
+    const response = await fetch(`${baseUrl}${path}`);
+    if (!response.ok) return null;
+    const buffer = await response.arrayBuffer();
+    return Buffer.from(buffer);
+  } catch {
+    return null;
+  }
+};
+
 const getUserAndRole = async (token) => {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user) {
@@ -81,7 +93,9 @@ export default async function handler(req, res) {
     const appBaseUrl = getBaseUrl(req);
     const acceptUrl = appBaseUrl ? `${appBaseUrl}/quote/${quote.public_id}/accept` : "";
     const slaUrl = quote.sla_url ?? (appBaseUrl ? `${appBaseUrl}/sla/${quote.public_id}` : "");
-    const pdf = await buildPdf({ quote, items, acceptUrl, slaUrl });
+    const logoDark = await loadLogo(appBaseUrl, "/logo-dark.png");
+    const logoLight = await loadLogo(appBaseUrl, "/logo-light.png");
+    const pdf = await buildPdf({ quote, items, acceptUrl, slaUrl, logoDark, logoLight });
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
