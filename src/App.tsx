@@ -31,6 +31,7 @@ import AdminQuoteBuilder from "./pages/admin/AdminQuoteBuilder";
 import AdminQuoteDetail from "./pages/admin/AdminQuoteDetail";
 import AdminContracts from "./pages/admin/AdminContracts";
 import AdminContractDetail from "./pages/admin/AdminContractDetail";
+import AdminTests from "./pages/admin/AdminTests";
 import QuoteLiveView from "./pages/QuoteLiveView";
 import QuoteAccept from "./pages/QuoteAccept";
 
@@ -90,6 +91,7 @@ const App = () => (
             <Route path="quotes/:id" element={<AdminQuoteDetail />} />
             <Route path="contracts" element={<AdminContracts />} />
             <Route path="contracts/:id" element={<AdminContractDetail />} />
+            <Route path="tests" element={<AdminTests />} />
           </Route>
 
           <Route path="*" element={<Layout><NotFound /></Layout>} />

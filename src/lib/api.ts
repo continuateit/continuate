@@ -393,8 +393,14 @@ export const createQuote = async (payload: {
 };
 
 export const sendQuote = async (id: string) => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) {
+    throw new Error("You must be signed in to send quotes.");
+  }
   const { data, error } = await supabase.functions.invoke("send-quote", {
     body: { quoteId: id },
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (error) handleError(error);
   return data ?? { ok: true };
@@ -698,8 +704,14 @@ export const fetchPortalSubscription = async (email: string): Promise<PortalSubs
 };
 
 export const downloadQuotePdf = async (id: string) => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) {
+    throw new Error("You must be signed in to download PDFs.");
+  }
   const { data, error } = await supabase.functions.invoke("quote-pdf", {
     body: { quoteId: id },
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (error) handleError(error);
   const base64 = data?.base64 as string | undefined;

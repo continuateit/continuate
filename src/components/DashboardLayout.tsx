@@ -10,6 +10,7 @@ import {
   BarChart3,
   FileText,
   FileCheck2,
+  FlaskConical,
   LogOut,
   Menu,
   X,
@@ -39,6 +40,7 @@ const adminNav: NavItem[] = [
   { label: "Tickets", path: "/admin/tickets", icon: Ticket },
   { label: "Subscriptions", path: "/admin/subscriptions", icon: CreditCard },
   { label: "Reports", path: "/admin/reports", icon: BarChart3 },
+  { label: "Tests", path: "/admin/tests", icon: FlaskConical },
 ];
 
 const DashboardLayout = ({ variant }: { variant: "client" | "admin" }) => {

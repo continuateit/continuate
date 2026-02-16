@@ -122,7 +122,7 @@ serve(async (req) => {
   }
 
   try {
-    const { quoteId } = await req.json();
+    const { quoteId, dryRun } = await req.json();
     if (!quoteId) {
       return new Response(JSON.stringify({ error: "quoteId is required" }), { status: 400 });
     }
@@ -144,22 +144,26 @@ serve(async (req) => {
     const link = `${appBaseUrl.replace(/\/$/, "")}/quote/${quote.public_id}`;
     const subject = `Your Continuate Proposal — ${quote.name}`;
 
-    await sendMailjet({
-      toEmail: quote.contact_email,
-      toName: quote.contact_name,
-      subject,
-      text: `Hi ${quote.contact_name ?? quote.customer},\n\nYour proposal is ready: ${link}\n\nBest,\nContinuate`,
-      html: `<p>Hi ${quote.contact_name ?? quote.customer},</p><p>Your Continuate proposal is ready.</p><p><a href="${link}">Open the live proposal</a></p><p>The PDF is attached.</p><p>Best,<br/>Continuate</p>`,
-      pdfBase64,
-      filename: `Continuate-Quote-${quote.public_id}.pdf`,
-    });
+    if (!dryRun) {
+      await sendMailjet({
+        toEmail: quote.contact_email,
+        toName: quote.contact_name,
+        subject,
+        text: `Hi ${quote.contact_name ?? quote.customer},\n\nYour proposal is ready: ${link}\n\nBest,\nContinuate`,
+        html: `<p>Hi ${quote.contact_name ?? quote.customer},</p><p>Your Continuate proposal is ready.</p><p><a href="${link}">Open the live proposal</a></p><p>The PDF is attached.</p><p>Best,<br/>Continuate</p>`,
+        pdfBase64,
+        filename: `Continuate-Quote-${quote.public_id}.pdf`,
+      });
+    }
 
-    await supabase
-      .from("quotes")
-      .update({ status: "Sent", sent_at: new Date().toISOString() })
-      .eq("id", quote.id);
+    if (!dryRun) {
+      await supabase
+        .from("quotes")
+        .update({ status: "Sent", sent_at: new Date().toISOString() })
+        .eq("id", quote.id);
+    }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ ok: true, dryRun: Boolean(dryRun) }), {
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
     });
   } catch (error) {
