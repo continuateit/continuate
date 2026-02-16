@@ -27,6 +27,27 @@ const AdminQuoteBuilder = () => {
   const [items, setItems] = useState(
     serviceCatalog.map((item) => ({ ...item, selected: true })),
   );
+  const [quoteName, setQuoteName] = useState("Summit Capital SLA + MSSP Program");
+  const [customer, setCustomer] = useState("Summit Capital Group");
+  const [contactName, setContactName] = useState("Taylor Brooks");
+  const [contactEmail, setContactEmail] = useState("taylor@summitcap.com");
+  const [region, setRegion] = useState("US-East");
+  const [owner, setOwner] = useState("Sophie Grant");
+  const [expiresAt, setExpiresAt] = useState("2026-03-20");
+  const [summary, setSummary] = useState(
+    "Continuate will deliver a unified IT SLA + MSSP program covering 24/7 monitoring, rapid incident response, and compliance reporting for Summit Capital's critical workloads.",
+  );
+  const [assumptionOne, setAssumptionOne] = useState(
+    "Client grants access to endpoint and network telemetry within 10 business days.",
+  );
+  const [assumptionTwo, setAssumptionTwo] = useState(
+    "Quarterly business reviews and KPI scorecards included.",
+  );
+  const [assumptionThree, setAssumptionThree] = useState(
+    "Monthly billing in arrears via ACH; annual renewal with 3% uplift.",
+  );
+  const [termsOne, setTermsOne] = useState("12-month term with annual renewal option.");
+  const [termsTwo, setTermsTwo] = useState("Service credits apply after SLA breach review.");
 
   const convert = (amount: number) => {
     if (currency === "USD") {
@@ -44,23 +65,16 @@ const AdminQuoteBuilder = () => {
   );
 
   const basePayload = {
-    name: "Summit Capital SLA + MSSP Program",
-    customer: "Summit Capital Group",
-    contactName: "Taylor Brooks",
-    contactEmail: "taylor@summitcap.com",
-    region: "US-East",
-    owner: "Sophie Grant",
-    expiresAt: "2026-03-20",
+    name: quoteName,
+    customer,
+    contactName,
+    contactEmail,
+    region,
+    owner,
+    expiresAt,
     currency,
-    assumptions: [
-      "Client grants access to endpoint and network telemetry within 10 business days.",
-      "Quarterly business reviews and KPI scorecards included.",
-      "Monthly billing in arrears via ACH; annual renewal with 3% uplift.",
-    ],
-    terms: [
-      "12-month term with annual renewal option.",
-      "Service credits apply after SLA breach review.",
-    ],
+    assumptions: [summary, assumptionOne, assumptionTwo, assumptionThree].filter(Boolean),
+    terms: [termsOne, termsTwo].filter(Boolean),
     items: items.filter((item) => item.selected).map((item) => ({
       ...item,
       unitPrice: convert(item.unitPrice),
@@ -135,20 +149,68 @@ const AdminQuoteBuilder = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="quoteName">Quote Name</Label>
+                    <Input
+                      id="quoteName"
+                      placeholder="Proposal name"
+                      value={quoteName}
+                      onChange={(e) => setQuoteName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="customer">Customer</Label>
-                    <Input id="customer" placeholder="Company name" defaultValue="Summit Capital Group" />
+                    <Input
+                      id="customer"
+                      placeholder="Company name"
+                      value={customer}
+                      onChange={(e) => setCustomer(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="contact">Primary Contact</Label>
-                    <Input id="contact" placeholder="Name" defaultValue="Taylor Brooks" />
+                    <Input
+                      id="contact"
+                      placeholder="Name"
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Contact Email</Label>
-                    <Input id="email" type="email" placeholder="taylor@summitcap.com" defaultValue="taylor@summitcap.com" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="contact@company.com"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="region">Region</Label>
-                    <Input id="region" placeholder="US-East" defaultValue="US-East" />
+                    <Input
+                      id="region"
+                      placeholder="Region"
+                      value={region}
+                      onChange={(e) => setRegion(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="owner">Owner</Label>
+                    <Input
+                      id="owner"
+                      placeholder="Account owner"
+                      value={owner}
+                      onChange={(e) => setOwner(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expiresAt">Expires At</Label>
+                    <Input
+                      id="expiresAt"
+                      type="date"
+                      value={expiresAt}
+                      onChange={(e) => setExpiresAt(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -156,7 +218,8 @@ const AdminQuoteBuilder = () => {
                   <Textarea
                     id="summary"
                     rows={4}
-                    defaultValue="Continuate will deliver a unified IT SLA + MSSP program covering 24/7 monitoring, rapid incident response, and compliance reporting for Summit Capital's critical workloads."
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
                   />
                 </div>
               </CardContent>
@@ -237,9 +300,12 @@ const AdminQuoteBuilder = () => {
                 <CardTitle className="text-lg">Assumptions & Terms</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Textarea rows={3} defaultValue="Client grants access to endpoint and network telemetry within 10 business days." />
-                <Textarea rows={3} defaultValue="Quarterly business reviews and KPI scorecards included." />
-                <Textarea rows={3} defaultValue="Monthly billing in arrears via ACH; annual renewal with 3% uplift." />
+                <Textarea rows={3} value={assumptionOne} onChange={(e) => setAssumptionOne(e.target.value)} />
+                <Textarea rows={3} value={assumptionTwo} onChange={(e) => setAssumptionTwo(e.target.value)} />
+                <Textarea rows={3} value={assumptionThree} onChange={(e) => setAssumptionThree(e.target.value)} />
+                <Separator />
+                <Textarea rows={2} value={termsOne} onChange={(e) => setTermsOne(e.target.value)} />
+                <Textarea rows={2} value={termsTwo} onChange={(e) => setTermsTwo(e.target.value)} />
               </CardContent>
             </Card>
           </motion.div>
