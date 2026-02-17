@@ -22,7 +22,10 @@ export const normalizeList = (value) => {
 
 export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight }) =>
   new Promise((resolve) => {
-    const doc = new PDFDocument({ size: "A4", margin: 40 });
+    const doc = new PDFDocument({
+      size: "A4",
+      margins: { top: 80, left: 40, right: 40, bottom: 50 },
+    });
     const chunks = [];
     doc.on("data", (chunk) => chunks.push(chunk));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
@@ -31,6 +34,8 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     const assumptions = normalizeList(quote.assumptions);
     const terms = normalizeList(quote.terms);
     const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const bodyTextColor = "#333";
+    const bodyFontSize = 9;
 
     const sectionTitle = (text) => {
       doc.moveDown(0.9);
@@ -52,7 +57,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
       const topY = 28;
       if (logoLight) {
         try {
-          doc.image(logoLight, doc.page.margins.left, topY, { width: 70 });
+          doc.image(logoLight, doc.page.margins.left, topY, { width: 90 });
         } catch {
           // ignore logo render errors
         }
@@ -78,8 +83,8 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
         .text(`Page ${pageIndex + 1}`, doc.page.width - doc.page.margins.right - 60, footerY - 6, {
           width: 60,
           align: "right",
+          lineBreak: false,
         });
-      doc.y = 80;
       drawingHeader = false;
     };
 
@@ -93,7 +98,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     doc.rect(0, 0, doc.page.width, doc.page.height).fill("#111");
     if (logoDark) {
       try {
-        doc.image(logoDark, 40, 40, { width: 130 });
+        doc.image(logoDark, 40, 40, { width: 180 });
       } catch {
         // ignore
       }
@@ -102,16 +107,16 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     doc.font("Helvetica").fontSize(12).text("Managed Security Services Proposal", 40, 140);
     doc.font("Helvetica-Bold").fontSize(28).text(quote.customer ?? "Client", 40, 165);
     doc.moveTo(40, 210).lineTo(260, 210).lineWidth(2).strokeColor("#fff").stroke();
-    doc.font("Helvetica").fontSize(11).text("Prepared by: Continuate IT Services", 40, 235);
+    doc.font("Helvetica").fontSize(11).text("Prepared by: Continuate IT Services (Pty) Ltd.", 40, 235);
     doc.text(`Proposal Reference: ${quote.public_id}`, 40, 255);
     doc.text(`Date: ${new Date().toLocaleDateString("en-ZA")}`, 40, 275);
     doc.text("Confidential & Proprietary", 40, 310);
 
     doc.addPage();
-    doc.fontSize(10).fillColor("#111");
+    doc.fontSize(bodyFontSize).fillColor("#111");
 
     sectionTitle("Executive Overview");
-    doc.font("Helvetica").fontSize(9).fillColor("#333");
+    doc.font("Helvetica").fontSize(bodyFontSize).fillColor(bodyTextColor);
     doc.text(
       "In today’s evolving threat landscape, financial institutions are primary targets for increasingly sophisticated cyber attacks.",
       { width: pageWidth }
@@ -175,33 +180,38 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     ].forEach((item) => doc.text(`• ${item}`, { width: pageWidth }));
 
     sectionTitle("Service Levels");
-    doc.font("Helvetica").fontSize(9).fillColor("#333");
+    doc.font("Helvetica").fontSize(bodyFontSize).fillColor(bodyTextColor);
     doc.text(
       "Our Service Level commitments are aligned to business risk impact and operational continuity requirements.",
       { width: pageWidth }
     );
     doc.moveDown(0.4);
     const svcTableTop = doc.y;
-    const svcColX = [40, 210, 360, 480];
-    doc.font("Helvetica-Bold").fontSize(9).fillColor("#555");
-    doc.text("Priority", svcColX[0], svcTableTop);
-    doc.text("Response Time", svcColX[1], svcTableTop);
-    doc.text("Resolution Target", svcColX[2], svcTableTop);
-    doc.moveDown(0.6);
-    doc.strokeColor("#eee").moveTo(40, doc.y).lineTo(555, doc.y).stroke();
-    doc.moveDown(0.4);
-    doc.font("Helvetica").fontSize(9).fillColor("#111");
-    [
+    const svcColX = [40, 170, 340];
+    const svcColW = [130, 170, 215];
+    const svcRowH = 18;
+    const svcRows = [
       ["Critical", "< 1 Hour", "4–8 Hours"],
       ["High", "< 4 Hours", "24 Hours"],
       ["Medium", "< 8 Hours", "2–3 Business Days"],
       ["Low", "1 Business Day", "Scheduled"],
-    ].forEach((row) => {
-      doc.text(row[0], svcColX[0], doc.y);
-      doc.text(row[1], svcColX[1], doc.y);
-      doc.text(row[2], svcColX[2], doc.y);
-      doc.moveDown(0.6);
+    ];
+    doc.rect(40, svcTableTop, 515, svcRowH).fill("#f3f4f6");
+    doc.font("Helvetica-Bold").fontSize(bodyFontSize).fillColor("#333");
+    doc.text("Priority", svcColX[0], svcTableTop + 5, { width: svcColW[0] });
+    doc.text("Response Time", svcColX[1], svcTableTop + 5, { width: svcColW[1] });
+    doc.text("Resolution Target", svcColX[2], svcTableTop + 5, { width: svcColW[2] });
+    svcRows.forEach((row, index) => {
+      const rowY = svcTableTop + svcRowH * (index + 1);
+      if (index % 2 === 1) {
+        doc.rect(40, rowY, 515, svcRowH).fill("#fafafa");
+      }
+      doc.font("Helvetica").fontSize(bodyFontSize).fillColor("#111");
+      doc.text(row[0], svcColX[0], rowY + 5, { width: svcColW[0] });
+      doc.text(row[1], svcColX[1], rowY + 5, { width: svcColW[1] });
+      doc.text(row[2], svcColX[2], rowY + 5, { width: svcColW[2] });
     });
+    doc.y = svcTableTop + svcRowH * (svcRows.length + 1) + 8;
 
     sectionTitle("Implementation Plan");
     doc.font("Helvetica-Bold").text("Phase 1 – Assessment & Discovery", { width: pageWidth });
@@ -235,35 +245,42 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
 
     sectionTitle("Pricing Structure");
     doc.font("Helvetica-Bold").text("Investment Summary", { width: pageWidth });
-    doc.font("Helvetica").fontSize(9).fillColor("#333");
+    doc.font("Helvetica").fontSize(bodyFontSize).fillColor(bodyTextColor);
     doc.text("Monthly Managed Security Investment", { width: pageWidth });
     doc.moveDown(0.2);
     const tableTop = doc.y;
-    const colX = [40, 250, 350, 430, 510];
-    doc.fontSize(9).fillColor("#555");
-    doc.text("Service Component", colX[0], tableTop);
-    doc.text("Users", colX[1], tableTop, { width: 80, align: "right" });
-    doc.text("Unit", colX[2], tableTop, { width: 80, align: "right" });
-    doc.text("Monthly Total", colX[3], tableTop, { width: 110, align: "right" });
-    doc.moveDown(0.6);
-    doc.strokeColor("#eee").moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+    const colX = [40, 260, 330, 410];
+    const colW = [220, 70, 80, 145];
+    const rowH = 18;
+    doc.rect(40, tableTop, 515, rowH).fill("#f3f4f6");
+    doc.font("Helvetica-Bold").fontSize(bodyFontSize).fillColor("#333");
+    doc.text("Service Component", colX[0], tableTop + 5, { width: colW[0] });
+    doc.text("Users", colX[1], tableTop + 5, { width: colW[1], align: "right" });
+    doc.text("Unit", colX[2], tableTop + 5, { width: colW[2], align: "right" });
+    doc.text("Monthly Total", colX[3], tableTop + 5, { width: colW[3], align: "right" });
 
-    doc.moveDown(0.4);
-    doc.fillColor("#111").font("Helvetica").fontSize(9);
+    doc.fillColor("#111").font("Helvetica").fontSize(bodyFontSize);
     if (!items?.length) {
-      doc.text("No line items added.", 40, doc.y);
+      const rowY = tableTop + rowH;
+      doc.rect(40, rowY, 515, rowH).fill("#fafafa");
+      doc.fillColor("#111").text("No line items added.", 44, rowY + 5, { width: 507 });
+      doc.y = rowY + rowH + 8;
     } else {
-      items.forEach((item) => {
+      items.forEach((item, index) => {
+        const rowY = tableTop + rowH * (index + 1);
+        if (index % 2 === 1) {
+          doc.rect(40, rowY, 515, rowH).fill("#fafafa");
+        }
         const total = Number(item.unit_price ?? 0) * Number(item.quantity ?? 0);
-        doc.text(item.name ?? "Service", colX[0], doc.y, { width: 200 });
-        doc.text(String(item.quantity ?? 0), colX[1], doc.y, { width: 80, align: "right" });
-        doc.text(formatCurrency(item.unit_price ?? 0, currency), colX[2], doc.y, {
-          width: 80,
+        doc.fillColor("#111").text(item.name ?? "Service", colX[0] + 4, rowY + 5, { width: colW[0] - 8, ellipsis: true });
+        doc.text(String(item.quantity ?? 0), colX[1], rowY + 5, { width: colW[1], align: "right" });
+        doc.text(formatCurrency(item.unit_price ?? 0, currency), colX[2], rowY + 5, {
+          width: colW[2],
           align: "right",
         });
-        doc.text(formatCurrency(total, currency), colX[3], doc.y, { width: 110, align: "right" });
-        doc.moveDown(0.8);
+        doc.text(formatCurrency(total, currency), colX[3], rowY + 5, { width: colW[3], align: "right" });
       });
+      doc.y = tableTop + rowH * (items.length + 1) + 8;
     }
 
     doc.moveDown(0.3);
@@ -273,7 +290,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     doc.text("Total Monthly Investment", 40, doc.y, { continued: true });
     doc.text(` ${formatCurrency(quote.total ?? 0, currency)} (Excl. VAT)`);
     doc.moveDown(0.4);
-    doc.font("Helvetica").fontSize(9).fillColor("#555");
+    doc.font("Helvetica").fontSize(bodyFontSize).fillColor("#555");
     doc.text("One-Time Setup Fee: Included", { width: pageWidth });
     doc.text("Implementation Timeline: 2–6 Weeks", { width: pageWidth });
     doc.moveDown(0.4);
@@ -286,7 +303,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     doc.x = doc.page.margins.left;
 
     sectionTitle("Contract Terms");
-    doc.font("Helvetica").fontSize(9);
+    doc.font("Helvetica").fontSize(bodyFontSize);
     [
       "Agreement Term: 12 / 24 / 36 Months",
       "Billing Frequency: Monthly",
@@ -329,7 +346,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     ].forEach((line) => doc.text(`• ${line}`, { width: pageWidth }));
 
     sectionTitle("Agreement & Acceptance");
-    doc.font("Helvetica").fontSize(9);
+    doc.font("Helvetica").fontSize(bodyFontSize);
     const accTop = doc.y;
     const accColX = [40, 300];
     doc.text("For Client", accColX[0], accTop);
