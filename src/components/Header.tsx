@@ -20,7 +20,10 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-black/10">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
-          <img src="/Continuate_logo.png" alt="Continuate" className="h-10 w-auto" />
+          <picture>
+            <source srcSet="/logo-light.png" media="(prefers-color-scheme: dark)" />
+            <img src="/logo-dark.png" alt="Continuate" className="h-10 w-auto" />
+          </picture>
         </Link>
 
         {/* Desktop nav */}
