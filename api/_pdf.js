@@ -36,6 +36,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
     const bodyTextColor = "#333";
     const bodyFontSize = 9;
+    const subheadingFontSize = 10;
 
     const sectionTitle = (text) => {
       doc.moveDown(0.9);
@@ -54,6 +55,8 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
       if (pageIndex === 0) return;
       if (drawingHeader) return;
       drawingHeader = true;
+      const prevX = doc.x;
+      const prevY = doc.y;
       const topY = 28;
       if (logoLight) {
         try {
@@ -69,22 +72,24 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
         .lineTo(doc.page.width - doc.page.margins.right, 60)
         .stroke();
 
-      const footerY = doc.page.height - 40;
+      const footerTextY = doc.page.height - doc.page.margins.bottom - 10;
       doc
         .strokeColor("#e5e5e5")
         .lineWidth(1)
-        .moveTo(doc.page.margins.left, footerY - 10)
-        .lineTo(doc.page.width - doc.page.margins.right, footerY - 10)
+        .moveTo(doc.page.margins.left, footerTextY - 4)
+        .lineTo(doc.page.width - doc.page.margins.right, footerTextY - 4)
         .stroke();
       doc
         .font("Helvetica")
         .fontSize(8)
         .fillColor("#666")
-        .text(`Page ${pageIndex + 1}`, doc.page.width - doc.page.margins.right - 60, footerY - 6, {
+        .text(`Page ${pageIndex + 1}`, doc.page.width - doc.page.margins.right - 60, footerTextY, {
           width: 60,
           align: "right",
           lineBreak: false,
         });
+      doc.x = prevX;
+      doc.y = prevY;
       drawingHeader = false;
     };
 
@@ -156,7 +161,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
 
     sectionTitle("Scope of Services");
     doc.font("Helvetica-Bold").text("Core Security Operations", { width: pageWidth });
-    doc.font("Helvetica").fontSize(9);
+    doc.font("Helvetica").fontSize(bodyFontSize);
     [
       "Security Monitoring (24/7 SOC): Continuous real-time monitoring of your environment.",
       "Managed EDR / XDR: Advanced endpoint threat detection and automated containment.",
@@ -168,7 +173,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
 
     doc.moveDown(0.4);
     doc.font("Helvetica-Bold").text("Optional Enhancements", { width: pageWidth });
-    doc.font("Helvetica").fontSize(9);
+    doc.font("Helvetica").fontSize(bodyFontSize);
     [
       "Managed Email Security",
       "Dark Web Monitoring",
@@ -215,19 +220,19 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
 
     sectionTitle("Implementation Plan");
     doc.font("Helvetica-Bold").text("Phase 1 – Assessment & Discovery", { width: pageWidth });
-    doc.font("Helvetica").fontSize(9);
+    doc.font("Helvetica").fontSize(bodyFontSize);
     ["Environment review", "Risk analysis", "Security gap identification"].forEach((line) =>
       doc.text(`• ${line}`, { width: pageWidth })
     );
     doc.moveDown(0.4);
     doc.font("Helvetica-Bold").text("Phase 2 – Deployment", { width: pageWidth });
-    doc.font("Helvetica").fontSize(9);
+    doc.font("Helvetica").fontSize(bodyFontSize);
     ["Agent installation", "Firewall integration", "Log ingestion configuration", "Baseline security hardening"].forEach(
       (line) => doc.text(`• ${line}`, { width: pageWidth })
     );
     doc.moveDown(0.4);
     doc.font("Helvetica-Bold").text("Phase 3 – Monitoring & Optimization", { width: pageWidth });
-    doc.font("Helvetica").fontSize(9);
+    doc.font("Helvetica").fontSize(bodyFontSize);
     ["Continuous monitoring", "Monthly security reporting", "Quarterly strategy review"].forEach((line) =>
       doc.text(`• ${line}`, { width: pageWidth })
     );
@@ -286,7 +291,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     doc.moveDown(0.3);
     doc.strokeColor("#eee").moveTo(40, doc.y).lineTo(555, doc.y).stroke();
     doc.moveDown(0.5);
-    doc.font("Helvetica-Bold").fontSize(14).fillColor("#111");
+    doc.font("Helvetica-Bold").fontSize(subheadingFontSize).fillColor("#111");
     doc.text("Total Monthly Investment", 40, doc.y, { continued: true });
     doc.text(` ${formatCurrency(quote.total ?? 0, currency)} (Excl. VAT)`);
     doc.moveDown(0.4);
@@ -365,7 +370,7 @@ export const buildPdf = ({ quote, items, acceptUrl, slaUrl, logoDark, logoLight 
     doc.text("Date: ____________", accColX[1], doc.y);
 
     sectionTitle("Next Steps");
-    doc.font("Helvetica").fontSize(9);
+    doc.font("Helvetica").fontSize(bodyFontSize);
     if (acceptUrl) {
       doc.fillColor("#111").text("Accept this quote online: ", { continued: true });
       doc.fillColor("#0a58ca").text(acceptUrl, { link: acceptUrl, underline: true });
